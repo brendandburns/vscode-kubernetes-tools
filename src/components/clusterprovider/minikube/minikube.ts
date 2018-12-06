@@ -206,12 +206,16 @@ async function minikubeStatus(context: Context): Promise<MinikubeInfo> {
     const result = await context.shell.exec(
         `${context.binPath} status --format '["{{.MinikubeStatus}}","{{.ClusterStatus}}","{{.KubeconfigStatus}}"]'`);
     if (result.stderr.length === 0) {
-        const obj = JSON.parse(result.stdout);
-        return {
-            running: 'Stopped' !== obj[0],
-            cluster: obj[1],
-            kubectl: obj[2],
-        } as MinikubeInfo;
+        try {
+            const obj = JSON.parse(result.stdout);
+            return {
+                running: 'Stopped' !== obj[0],
+                cluster: obj[1],
+                kubectl: obj[2],
+            } as MinikubeInfo;
+        } catch (err) {
+            throw new Error(`Unexpected output from minikube: ${result.stdout}`);
+        }
     }
     throw new Error(`failed to get status: ${result.stderr}`);
 }
